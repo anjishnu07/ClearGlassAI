@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Dashboard | ClearGlass.ai</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+  <div class="logo">
+    <div class="logo-box">👁</div>
+    <div>
+      <h2>ClearGlass.ai</h2>
+      <p>See through your model's blind spots</p>
+    </div>
+  </div>
+
+  <nav>
+    <a href="/">Upload</a>
+    <a href="/audit" class="active">Audit</a>
+    <a href="/mitigation">Mitigation</a>
+  </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+  <span class="step-badge">STEP 2 / 3 · AUDIT</span>
+
+  <h1>Fairness Audit Dashboard</h1>
+
+  <p>
+    Dataset: {{ filename if filename else "Sample Dataset" }}<br>
+    {{ rows if rows else "32,561" }} rows ·
+    {{ cols if cols else "15" }} columns
+  </p>
+</section>
+
+<!-- Bias Alert -->
+<section class="card page-fade" style="margin-bottom:30px;">
+
+  <span class="status-badge status-danger">
+    BIAS DETECTED
+  </span>
+
+  <h3>Fairness Risk Identified</h3>
+
+  <p>
+    Disparate Impact Ratio falls below the accepted
+    0.8 four-fifths rule.
+
+    Substantive disparity exists between privileged
+    and unprivileged groups.
+
+    Mitigation is strongly recommended.
+  </p>
+
+</section>
+
+<!-- Metrics Cards -->
+<section class="cards">
+
+  <div class="card">
+    <h3>0.3402</h3>
+    <p>Disparate Impact Ratio (DIR)</p>
+  </div>
+
+  <div class="card">
+    <h3>0.1735</h3>
+    <p>Statistical Parity Difference (SPD)</p>
+  </div>
+
+  <div class="card">
+    <h3>0.0770</h3>
+    <p>Equalized Odds Difference (EOD)</p>
+  </div>
+
+</section>
+
+<!-- Dynamic Configuration -->
+<section class="card" style="margin-top:30px; margin-bottom:30px;">
+  <h3>Configure Fairness Analysis</h3>
+  <p>Select columns from uploaded dataset</p>
+
+  <form>
+
+    <label>Sensitive Feature</label>
+    <br><br>
+
+    <select style="width:100%; padding:14px; border-radius:12px;">
+      {% if columns %}
+        {% for col in columns %}
+          <option>{{ col }}</option>
+        {% endfor %}
+      {% else %}
+        <option>gender</option>
+        <option>race</option>
+      {% endif %}
+    </select>
+
+    <br><br>
+
+    <label>Target Variable</label>
+    <br><br>
+
+    <select style="width:100%; padding:14px; border-radius:12px;">
+      {% if columns %}
+        {% for col in columns %}
+          <option>{{ col }}</option>
+        {% endfor %}
+      {% else %}
+        <option>income</option>
+        <option>approved</option>
+      {% endif %}
+    </select>
+
+    <br><br>
+
+    <label>Privileged Group</label>
+    <br><br>
+
+    <input
+      type="text"
+      placeholder="Example: Male / White / General"
+      style="width:100%; padding:14px; border-radius:12px;"
+    >
+
+    <br><br>
+
+    <label>Model Type</label>
+    <br><br>
+
+    <select style="width:100%; padding:14px; border-radius:12px;">
+      <option>Random Forest</option>
+      <option>Logistic Regression</option>
+      <option>XGBoost</option>
+    </select>
+
+    <br><br>
+
+    <button type="submit">
+      Analyze Dataset →
+    </button>
+
+  </form>
+</section>
+
+<!-- Real Plotly Selection Graph -->
+<section class="card" style="margin-top:30px; margin-bottom:30px;">
+  <h3>Selection Rate by Group</h3>
+
+  <div style="margin-top:20px;">
+    {% if selection_chart %}
+      {{ selection_chart | safe }}
+    {% else %}
+      <p>Graph will appear after dataset upload.</p>
+    {% endif %}
+  </div>
+</section>
+<!--Confusion Matrix-->
+<section class="card" style="margin-bottom:30px;">
+  <h3>Confusion Matrix by Group</h3>
+
+  <div style="margin-top:20px;">
+    {% if confusion_chart %}
+      {{ confusion_chart | safe }}
+    {% else %}
+      <p>Confusion graph will appear after upload.</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- SHAP Feature Importance -->
+<section class="card" style="margin-bottom:30px;">
+  <h3>SHAP Feature Importance (Top 12)</h3>
+
+  <div style="margin-top:20px;">
+    {% if shap_chart %}
+      {{ shap_chart | safe }}
+    {% else %}
+      <p>SHAP graph will appear after upload.</p>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Per Group MetricFrame -->
+<section class="card" style="margin-bottom:30px;">
+  <h3>Per-Group MetricFrame</h3>
+
+  <table style="width:100%; margin-top:20px; border-collapse:collapse; line-height:2;">
+    <tr>
+      <th align="left">Group</th>
+      <th align="left">Accuracy</th>
+      <th align="left">Selection Rate</th>
+      <th align="left">TPR</th>
+      <th align="left">FPR</th>
+    </tr>
+
+    <tr>
+      <td>Privileged</td>
+      <td>0.8177</td>
+      <td>0.2629</td>
+      <td>0.6327</td>
+      <td>0.1016</td>
+    </tr>
+
+    <tr>
+      <td>Unprivileged</td>
+      <td>0.9323</td>
+      <td>0.0894</td>
+      <td>0.5959</td>
+      <td>0.0246</td>
+    </tr>
+  </table>
+</section>
+
+<!-- Local SHAP -->
+<section class="card" style="margin-bottom:30px;">
+  <h3>Local SHAP Explanation</h3>
+
+  <p style="margin-top:20px;">
+    Row Index:
+  </p>
+
+  <input
+    type="text"
+    placeholder="0"
+    style="width:220px; padding:14px; border-radius:12px; margin-top:15px;"
+  >
+
+  <br><br>
+
+  <button>
+    Explain Row →
+  </button>
+</section>
+
+<!-- Proceed -->
+<section class="card">
+  <h3>Proceed to Mitigation Lab</h3>
+  <p>
+    Apply fairness improvement strategies and compare
+    baseline vs mitigated model.
+  </p>
+
+  <a href="/mitigation">
+    Open Mitigation →
+  </a>
+</section>
+
+</body>
+</html>

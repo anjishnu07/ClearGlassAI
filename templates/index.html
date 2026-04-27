@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClearGlass.ai</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="logo">
+    <div class="logo-box">👁</div>
+    <div>
+      <h2>ClearGlass.ai</h2>
+      <p>See through your model's blind spots</p>
+    </div>
+  </div>
+
+  <nav>
+    <a href="/" class="active">Upload</a>
+    <a href="/audit">Audit</a>
+    <a href="/mitigation">Mitigation</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <span class="step-badge">STEP 1 / 3 · DATASET</span>
+
+  <h1>
+    Inspect any dataset for
+    <span>algorithmic discrimination.</span>
+  </h1>
+
+  <p>
+    Upload your CSV/Excel or load a real-world benchmark.
+    We compute disparate impact, equalized odds, and SHAP
+    explanations on your model.
+  </p>
+</section>
+
+<section class="cards">
+
+  <!-- UCI Card -->
+  <div class="card">
+    <h3>UCI Adult Census Income</h3>
+    <p>32k rows · gender → income</p>
+    <a href="/audit">Load sample →</a>
+  </div>
+
+  <!-- COMPAS Card -->
+  <div class="card">
+    <h3>COMPAS Recidivism</h3>
+    <p>7k rows · race → recidivism risk</p>
+    <a href="/audit">Load sample →</a>
+  </div>
+
+  <!-- Upload Card -->
+  <div class="card">
+    <h3>Upload CSV / XLSX</h3>
+    <p>Max 50 MB · ≥100 rows · binary target</p>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <input
+        type="file"
+        name="file"
+        accept=".csv,.xlsx"
+        required
+      >
+
+      <br><br>
+
+      <button type="submit">
+        Run Fairness Audit →
+      </button>
+    </form>
+  </div>
+
+</section>
+
+</body>
+</html>
