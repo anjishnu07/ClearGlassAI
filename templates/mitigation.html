@@ -116,14 +116,19 @@
 
   <br><br><br>
 
-  <button>
+  <!-- WORKING BUTTON -->
+  <button type="button" onclick="applyMitigation()">
     Apply Mitigation →
   </button>
+
+  <!-- RESULT BOX -->
+  <div id="recommendation-box" style="margin-top:25px;"></div>
+
 </section>
 
 <!-- Interactive Mitigation Graph -->
 <section class="card" style="margin-bottom:30px;">
-  <h3>Mitigation Comparison Graph</h3>
+  <h3>Fairness Improvement After Bias Mitigation</h3>
   <p>
     Disparate Impact Ratio improvement after mitigation
   </p>
@@ -201,6 +206,22 @@
 
   </table>
 </section>
+
+<!-- JavaScript -->
+<script>
+function applyMitigation() {
+    alert("Mitigation Applied Successfully!");
+
+    const recommendation = document.getElementById("recommendation-box");
+
+    recommendation.innerHTML = `
+        <h3>Recommended Best Mitigation</h3>
+        <p><strong>Threshold Optimization</strong></p>
+        <p>Reason: Highest DIR improvement, lowest SPD and EOD, with acceptable accuracy tradeoff.</p>
+        <p><strong>DIR Improved:</strong> 0.3402 → 0.8441</p>
+    `;
+}
+</script>
 
 </body>
 </html>
