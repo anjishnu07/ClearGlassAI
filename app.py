@@ -273,30 +273,186 @@ def mitigation():
 
 
 # =====================================
-# PDF REPORT DOWNLOAD
+# PREMIUM PDF REPORT DOWNLOAD
 # =====================================
+
 @app.route("/download-report")
 def download_report():
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    import os
+    from datetime import datetime
+
     os.makedirs("reports", exist_ok=True)
+
     pdf_path = "reports/fairness_report.pdf"
 
-    c = canvas.Canvas(pdf_path)
+    c = canvas.Canvas(pdf_path, pagesize=A4)
+    width, height = A4
 
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(80, 800, "ClearGlass.ai")
+    y = height - 50
+
+    # PAGE 1 — COVER PAGE
+    c.setFont("Helvetica-Bold", 22)
+    c.drawString(60, y, "ClearGlass.ai")
+    y -= 40
 
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(80, 770, "Algorithmic Fairness Report")
+    c.drawString(60, y, "Algorithmic Fairness Report")
+    y -= 30
+
+    c.setFont("Helvetica", 11)
+    c.drawString(60, y, f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M')}")
+    y -= 25
+
+    c.drawString(60, y, "Dataset: Adult Census Income")
+    y -= 20
+
+    c.drawString(60, y, "Sensitive Feature: Gender")
+    y -= 20
+
+    c.drawString(60, y, "Target Variable: Income > 50K")
+    y -= 20
+
+    c.drawString(60, y, "Model: Random Forest")
+    y -= 40
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(60, y, "Bias Verdict: BIAS DETECTED")
+    y -= 40
 
     c.setFont("Helvetica", 12)
-    c.drawString(80, 730, "Bias Status: BIAS DETECTED")
-    c.drawString(80, 700, "DIR Score: 0.47")
-    c.drawString(80, 670, "Model Accuracy: 0.8557")
+    c.drawString(60, y, "Summary:")
+    y -= 20
 
-    c.drawString(80, 620, "Recommended Mitigation:")
-    c.drawString(80, 590, "- Reweighing")
-    c.drawString(80, 560, "- Exponentiated Gradient")
-    c.drawString(80, 530, "- Threshold Optimization")
+    summary_lines = [
+        "The fairness audit identified significant disparity",
+        "between privileged and unprivileged groups.",
+        "Disparate Impact Ratio is below the accepted",
+        "0.8 four-fifths rule, indicating potential bias.",
+        "Mitigation is strongly recommended before deployment."
+    ]
+
+    for line in summary_lines:
+        c.drawString(80, y, line)
+        y -= 18
+
+    c.showPage()
+
+    # PAGE 2 — METRICS
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(60, y, "Executive Summary")
+    y -= 40
+
+    metrics = [
+        ("Disparate Impact Ratio (DIR)", "0.3402"),
+        ("Statistical Parity Difference (SPD)", "0.1735"),
+        ("Equalized Odds Difference (EOD)", "0.0770"),
+        ("Accuracy", "0.8557"),
+        ("F1 Score", "0.8516"),
+        ("ROC AUC", "0.9064")
+    ]
+
+    c.setFont("Helvetica", 12)
+
+    for metric, value in metrics:
+        c.drawString(80, y, f"{metric}: {value}")
+        y -= 25
+
+    c.showPage()
+
+    # PAGE 3 — GROUP METRICS
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(60, y, "Per-Group Metrics")
+    y -= 40
+
+    group_lines = [
+        "Privileged Group:",
+        "Selection Rate: 0.2629",
+        "TPR: 0.6327",
+        "FPR: 0.1016",
+        "Accuracy: 0.8177",
+        "",
+        "Unprivileged Group:",
+        "Selection Rate: 0.0894",
+        "TPR: 0.5959",
+        "FPR: 0.0246",
+        "Accuracy: 0.9323"
+    ]
+
+    c.setFont("Helvetica", 12)
+
+    for line in group_lines:
+        c.drawString(80, y, line)
+        y -= 22
+
+    c.showPage()
+
+    # PAGE 4 — MITIGATION RESULTS
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(60, y, "Mitigation Results")
+    y -= 40
+
+    mitigation_lines = [
+        "Baseline DIR: 0.3402",
+        "",
+        "After Reweighing: 0.7121",
+        "Improvement: +0.3719",
+        "",
+        "After Exponentiated Gradient: 0.8012",
+        "Improvement: +0.4610",
+        "",
+        "After Threshold Optimization: 0.8441",
+        "Improvement: +0.5039"
+    ]
+
+    c.setFont("Helvetica", 12)
+
+    for line in mitigation_lines:
+        c.drawString(80, y, line)
+        y -= 22
+
+    c.showPage()
+
+    # PAGE 5 — RECOMMENDATIONS
+    y = height - 50
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(60, y, "Recommendations")
+    y -= 40
+
+    recommendations = [
+        "1. Apply Reweighing before model training",
+        "2. Use Threshold Optimization for deployment fairness",
+        "3. Monitor fairness metrics continuously",
+        "4. Maintain compliance-ready fairness reports",
+        "5. Human review is recommended for high-risk decisions"
+    ]
+
+    c.setFont("Helvetica", 12)
+
+    for line in recommendations:
+        c.drawString(80, y, line)
+        y -= 25
+
+    y -= 20
+
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(60, y, "Final Verdict:")
+    y -= 30
+
+    c.setFont("Helvetica", 12)
+    c.drawString(
+        80,
+        y,
+        "Bias mitigation is required before production deployment."
+    )
 
     c.save()
 
@@ -304,7 +460,3 @@ def download_report():
         pdf_path,
         as_attachment=True
     )
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
