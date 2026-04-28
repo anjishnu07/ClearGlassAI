@@ -278,8 +278,340 @@ def apply_mitigation():
 # =====================================
 @app.route("/download-report")
 def download_report():
-    return send_file("reports/fairness_report.pdf", as_attachment=True)
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+        Image
+    )
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    import matplotlib.pyplot as plt
 
+    report_path = "fairness_report.pdf"
+
+    # =========================
+    # CREATE GRAPH 1
+    # Selection Rate by Group
+    # =========================
+
+    graph1_path = "selection_rate_graph.png"
+
+    groups = ["Privileged", "Unprivileged"]
+    values = [72, 34]
+
+    plt.figure(figsize=(6, 4))
+    plt.bar(groups, values)
+    plt.title("Selection Rate by Group")
+    plt.ylabel("Selection Rate")
+    plt.tight_layout()
+    plt.savefig(graph1_path)
+    plt.close()
+
+    # =========================
+    # CREATE GRAPH 2
+    # Mitigation Comparison
+    # =========================
+
+    graph2_path = "mitigation_graph.png"
+
+    methods = [
+        "Baseline",
+        "Reweighing",
+        "Exp Gradient",
+        "Threshold"
+    ]
+
+    dir_scores = [
+        0.3402,
+        0.7121,
+        0.8012,
+        0.8441
+    ]
+
+    plt.figure(figsize=(6, 4))
+    plt.bar(methods, dir_scores)
+    plt.title("Mitigation Comparison (DIR)")
+    plt.ylabel("DIR Score")
+    plt.tight_layout()
+    plt.savefig(graph2_path)
+    plt.close()
+
+    # =========================
+    # PDF START
+    # =========================
+
+    doc = SimpleDocTemplate(
+        report_path,
+        pagesize=A4
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    # =========================
+    # PAGE 1 : COVER PAGE
+    # =========================
+
+    elements.append(
+        Paragraph(
+            "<font size=24><b>ClearGlass.ai</b></font>",
+            styles["Title"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.25 * inch))
+
+    elements.append(
+        Paragraph(
+            "<font size=16><b>Algorithmic Fairness Audit Report</b></font>",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.35 * inch))
+
+    cover_info = [
+        "Generated Date: 28-04-2026 15:52",
+        "Dataset: Adult Census Income",
+        "Sensitive Feature: Gender",
+        "Target Variable: Income > 50K",
+        "Model Used: Random Forest"
+    ]
+
+    for item in cover_info:
+        elements.append(Paragraph(item, styles["Normal"]))
+        elements.append(Spacer(1, 0.12 * inch))
+
+    elements.append(Spacer(1, 0.2 * inch))
+
+    bias_box = Table([
+        ["BIAS DETECTED"]
+    ])
+
+    bias_box.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.red),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 16),
+        ("PADDING", (0, 0), (-1, -1), 14)
+    ]))
+
+    elements.append(bias_box)
+    elements.append(Spacer(1, 0.35 * inch))
+
+    summary = """
+    Executive Summary:<br/><br/>
+    Significant disparity exists between privileged and
+    unprivileged groups. The DIR is below the accepted
+    threshold of 0.8, indicating algorithmic bias.
+    Mitigation is strongly recommended before deployment.
+    """
+
+    elements.append(
+        Paragraph(summary, styles["Normal"])
+    )
+
+    elements.append(Spacer(1, 0.5 * inch))
+
+    # =========================
+    # PAGE 2 : FAIRNESS TABLE
+    # =========================
+
+    elements.append(
+        Paragraph(
+            "<b>Fairness Metrics Summary</b>",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.2 * inch))
+
+    metrics_data = [
+        ["Metric", "Value", "Safe Threshold", "Status"],
+        ["DIR", "0.3402", "> 0.80", "Unsafe"],
+        ["SPD", "0.1735", "< 0.10", "Risk"],
+        ["EOD", "0.0770", "< 0.05", "Risk"],
+        ["Accuracy", "0.8557", "High", "Good"]
+    ]
+
+    metrics_table = Table(metrics_data)
+
+    metrics_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1E40AF")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("PADDING", (0, 0), (-1, -1), 10)
+    ]))
+
+    elements.append(metrics_table)
+    elements.append(Spacer(1, 0.4 * inch))
+
+    # =========================
+    # PAGE 3 : GRAPH PAGE
+    # =========================
+
+    elements.append(
+        Paragraph(
+            "<b>Graphical Fairness Analysis</b>",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.25 * inch))
+
+    elements.append(
+        Paragraph(
+            "<b>Selection Rate by Group</b>",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.15 * inch))
+
+    elements.append(
+        Image(graph1_path, width=5.8 * inch, height=3.6 * inch)
+    )
+
+    elements.append(Spacer(1, 0.35 * inch))
+
+    elements.append(
+        Paragraph(
+            "<b>Mitigation Comparison Graph</b>",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.15 * inch))
+
+    elements.append(
+        Image(graph2_path, width=5.8 * inch, height=3.6 * inch)
+    )
+
+    elements.append(Spacer(1, 0.4 * inch))
+
+    # =========================
+    # PAGE 4 : PER GROUP ANALYSIS
+    # =========================
+
+    elements.append(
+        Paragraph(
+            "<b>Per Group Analysis</b>",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.2 * inch))
+
+    group_data = [
+        ["Group", "Selection Rate", "TPR", "FPR", "Accuracy"],
+        ["Privileged", "0.2629", "0.6327", "0.1016", "0.8177"],
+        ["Unprivileged", "0.0894", "0.5959", "0.0246", "0.9323"]
+    ]
+
+    group_table = Table(group_data)
+
+    group_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2563EB")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("PADDING", (0, 0), (-1, -1), 10)
+    ]))
+
+    elements.append(group_table)
+    elements.append(Spacer(1, 0.35 * inch))
+
+    explanation = """
+    The privileged group receives significantly higher
+    positive outcomes than the unprivileged group,
+    indicating unfair hiring bias in the model.
+    """
+
+    elements.append(
+        Paragraph(explanation, styles["Normal"])
+    )
+
+    elements.append(Spacer(1, 0.4 * inch))
+
+    # =========================
+    # PAGE 5 : FINAL RECOMMENDATION
+    # =========================
+
+    elements.append(
+        Paragraph(
+            "<b>Mitigation Recommendation</b>",
+            styles["Heading2"]
+        )
+    )
+
+    elements.append(Spacer(1, 0.2 * inch))
+
+    mitigation_data = [
+        ["Method", "DIR"],
+        ["Baseline", "0.3402"],
+        ["Reweighing", "0.7121"],
+        ["Exp Gradient", "0.8012"],
+        ["Threshold Optimization", "0.8441"]
+    ]
+
+    mitigation_table = Table(mitigation_data)
+
+    mitigation_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#059669")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("PADDING", (0, 0), (-1, -1), 10)
+    ]))
+
+    elements.append(mitigation_table)
+    elements.append(Spacer(1, 0.35 * inch))
+
+    recommendation = """
+    <b>Best Recommended Strategy:</b><br/><br/>
+    Threshold Optimization provides the best fairness
+    improvement with acceptable accuracy tradeoff.
+    Deployment is recommended only after mitigation.
+    """
+
+    elements.append(
+        Paragraph(recommendation, styles["Normal"])
+    )
+
+    elements.append(Spacer(1, 0.25 * inch))
+
+    final_box = Table([
+        ["DEPLOY ONLY AFTER MITIGATION"]
+    ])
+
+    final_box.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.green),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 14),
+        ("PADDING", (0, 0), (-1, -1), 14)
+    ]))
+
+    elements.append(final_box)
+
+    # BUILD FINAL PDF
+    doc.build(elements)
+
+    return send_file(
+        report_path,
+        as_attachment=True
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
